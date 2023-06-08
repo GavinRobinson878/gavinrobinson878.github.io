@@ -1,0 +1,23 @@
+
+/*section 1 Header*/
+
+body {
+    width: 95%;
+    background-color: gray;
+}
+
+header {
+    display: flex;
+    align-items: center;
+}
+
+header h1 {
+    flex-basis: 70%;
+}
+
+header nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-basis: 30%;
+}
