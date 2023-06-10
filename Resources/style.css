@@ -2,8 +2,8 @@
 /*section 1 Header*/
 
 body {
-    width: 95%;
-    background-color: gray;
+    margin-left: 10%;
+    margin-right: 10%;
 }
 
 header {
@@ -20,4 +20,18 @@ header nav {
     align-items: center;
     justify-content: space-between;
     flex-basis: 30%;
+}
+
+/*Section-2 Body*/
+.section-2 {
+    display: flex;
+}
+
+.section-2 .section-2-1 {
+    flex-basis: 50%;
+    justify-content: center;
+}
+
+.section-2 .section-2-2 {
+    flex-basis: 50%;
 }
