@@ -37,6 +37,9 @@ header nav {
 }
 
 /*Section-3 Body*/
+.section-3 a {
+    text-decoration: underline;
+}
 
 /*Section-4 Body*/
 .section-4-1 {
