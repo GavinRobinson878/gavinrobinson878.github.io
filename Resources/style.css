@@ -34,16 +34,38 @@ header nav {
 
 .section-2 .section-2-2 {
     flex-basis: 50%;
+    display: flex;
+    justify-content: center;
+}
+
+.section-2 .section-2-2 img {
+    padding-left: 45%;
 }
 
 /*Section-3 Body*/
+
+.section-3 {
+    margin-top: -5%;
+}
+
 .section-3 a {
     text-decoration: underline;
 }
 
 /*Section-4 Body*/
+
+.section-4 {
+    margin-top: 5%;
+}
+
 .section-4-1 {
     display: flex;
     justify-content: space-between;
     width: 70%;
+}
+
+/*Section-5 Body*/
+
+.section-5 {
+    margin-top: 5%;
 }
