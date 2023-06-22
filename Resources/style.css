@@ -4,28 +4,44 @@
 body {
     margin-left: 10%;
     margin-right: 10%;
+    font-family: 'Mulish', sans-serif;
+}
+
+.download {
+    padding-top: 2%;
+}
+
+h1, h2, h3, h4 {
+    font-family: 'Roboto', sans-serif;
+}
+
+p {
+    line-height: 2;
 }
 
 header {
     display: flex;
     align-items: center;
+    background-color: black;
+    color: white;
 }
 
+header a, header a:link, header a:visited {
+    color: #FFFAFA;
+    text-decoration: none;
+  }
+
 header h1 {
-    flex-basis: 70%;
+    flex-basis: 60%;
 }
 
 header nav {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    flex-basis: 30%;
+    justify-content: space-around;
+    flex-basis: 40%;
 }
 
-header nav a {
-    color: black;
-    text-decoration: none;
-}
 
 /*Section-2 Body*/
 .section-2 {
@@ -44,13 +60,14 @@ header nav a {
 }
 
 .section-2 .section-2-2 img {
-    padding-left: 45%;
+    padding-left: 25%;
+    padding-top: 5%;
 }
 
 /*Section-3 Body*/
 
 .section-3 {
-    margin-top: -5%;
+    margin-top: -1%;
 }
 
 .section-3 a {
