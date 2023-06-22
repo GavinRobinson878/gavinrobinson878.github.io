@@ -35,6 +35,10 @@ header h1 {
     flex-basis: 60%;
 }
 
+#Project_header {
+    flex-basis: 100%;
+}
+
 header nav {
     display: flex;
     align-items: center;
@@ -90,4 +94,70 @@ header nav {
 
 .section-5 {
     margin-top: 5%;
+}
+
+/*Media Queries*/
+
+@media screen and (max-width: 465px) {
+    header nav {
+        display: none;
+    }
+
+    header h1 {
+        flex-basis: 100%;
+    }
+
+    .section-2-2 img{
+        display: none;
+        width: 0%;
+        max-width: 0%;
+        max-height: 0%;
+    }
+
+    .section-2-2 {
+        visibility: hidden;
+    }
+
+    .section-2-1 {
+        text-align: center;
+        flex-basis: 100%;
+        flex-grow: grow;
+    }
+    
+    .section-4-1 {
+        flex-wrap: wrap;
+    }
+} 
+
+@media screen and (max-width: 770px) {
+
+    header h1 {
+        flex-basis: 30%;
+    }
+
+    .section-2 {
+        flex-wrap: wrap;
+    }
+
+
+    header nav {
+        flex-basis: 70%;
+    }
+
+    .section-2-2 img {
+        padding-top: 3%;
+    }
+
+    .userExperience img {
+        max-width: 100%;
+    }
+
+}
+
+@media screen and (max-width: 1350px) {
+
+    .HowIDidIt img {
+        max-width: 100%;
+    }
+
 }
