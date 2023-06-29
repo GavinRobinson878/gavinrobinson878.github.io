@@ -66,6 +66,8 @@ header nav {
 .section-2 .section-2-2 img {
     padding-left: 25%;
     padding-top: 5%;
+    max-width: 175px; 
+    height: 250px;
 }
 
 /*Section-3 Body*/
@@ -107,6 +109,11 @@ header nav {
         flex-basis: 100%;
     }
 
+    .section-2 {
+        display: flex;
+        justify-content: center;
+    }
+
     .section-2-2 img{
         display: none;
         width: 0%;
@@ -115,17 +122,30 @@ header nav {
     }
 
     .section-2-2 {
-        visibility: hidden;
+        display: flex;
+        max-width: 0%;
+        max-height: 0%;
+        flex-basis: 0%;
+        flex: 0;
+        overflow: hidden;
+        flex-shrink: 100;
     }
 
     .section-2-1 {
         text-align: center;
         flex-basis: 100%;
-        flex-grow: grow;
+        width: 100%;
+        flex-grow: 2;
     }
     
     .section-4-1 {
         flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .section-4-1 h4 {
+        flex: 1 1 auto;
+        width: auto;
     }
 } 
 
