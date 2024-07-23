@@ -37,17 +37,17 @@ void shuffleDeck(struct tableDeck* deck){
 
 }
 
-//function prototypes
+//function prototypes (so to call functions farther down the list (forward declaration))
 
-int userDecision_1(int*, struct player*, struct player*, int, int*, int*, int*);
-int userDecision_2(int*, struct player*, struct player*, int*, int); 
-int compDecision_1(int*, struct player*, struct player*, int, int*, int*, int*);
-int compDecision_2(int*, struct player*, struct player*, int, int*);
-int compDecision_1_1(int*, struct player*, struct player*, int, int*);
+int userDecision_1(int*, struct player*, struct player*, int, int*, int*, int*, int, int);
+int userDecision_2(int*, struct player*, struct player*, int*, int, int, int); 
+int compDecision_1(int*, struct player*, struct player*, int, int*, int*, int*, int, int);
+int compDecision_2(int*, struct player*, struct player*, int, int*, int, int);
+int compDecision_1_1(int*, struct player*, struct player*, int, int*, int, int);
 void printOptions_1(void);
 //player functions
 
-int userDecision_1(int* userDecision, struct player* userPlayer, struct player* compPlayer, int maxBet, int* smallBlind, int* bigBlind, int* potTotal){
+int userDecision_1(int* userDecision, struct player* userPlayer, struct player* compPlayer, int maxBet, int* smallBlind, int* bigBlind, int* potTotal, int roundNum, int compBluff){
 	fflush(stdout);
 	scanf("%d", userDecision);
 	int computerDecision;
@@ -58,7 +58,7 @@ int userDecision_1(int* userDecision, struct player* userPlayer, struct player* 
 		userPlayer->chips -= *bigBlind;
 		printf("\nUser puts %d chips in pot with %d remaining\n\n", *bigBlind, userPlayer->chips);
 		*potTotal += *bigBlind;
-		computerDecision = compDecision_1(userDecision, userPlayer, compPlayer, maxBet, smallBlind, bigBlind, potTotal);
+		computerDecision = compDecision_1(userDecision, userPlayer, compPlayer, maxBet, smallBlind, bigBlind, potTotal, roundNum, compBluff);
 		return computerDecision;
 	} else if(*userDecision == 2) { //user chooses to raise
 		printf("\nUser chose to raise");
@@ -68,7 +68,7 @@ int userDecision_1(int* userDecision, struct player* userPlayer, struct player* 
 		printf("\nUser raises %d", *userDecision);
 		userPlayer->chips -= *userDecision;
 		*potTotal += *userDecision;
-		return compDecision_1_1(userDecision, userPlayer, compPlayer, maxBet, potTotal);
+		return compDecision_1_1(userDecision, userPlayer, compPlayer, maxBet, potTotal, roundNum, compBluff);
 	} else if(*userDecision == 3){ //user chooses to fold (announce winner of hand and move on to next round)
 		printf("\nUser chose to fold");
 		printf("\n\nComputer wins the pot");
@@ -86,9 +86,9 @@ int userDecision_1(int* userDecision, struct player* userPlayer, struct player* 
 	}
 
 }
-
+//hi
 //user decision after the 1st hand if user going first
-int userDecision_2(int* userDecision, struct player* userPlayer, struct player* compPlayer, int* potTotal, int maxBet){ 
+int userDecision_2(int* userDecision, struct player* userPlayer, struct player* compPlayer, int* potTotal, int maxBet, int roundNum, int compBluff){ 
 	fflush(stdout);
 	scanf("%d", userDecision);
 	int computerDecision;
@@ -96,7 +96,7 @@ int userDecision_2(int* userDecision, struct player* userPlayer, struct player* 
 	//user decision for 2nd hand
 	if(*userDecision == 1){ //user chooses to check 
 		printf("\nUser chose to check");
-		computerDecision = compDecision_2(userDecision, userPlayer, compPlayer, maxBet, potTotal);
+		computerDecision = compDecision_2(userDecision, userPlayer, compPlayer, maxBet, potTotal, roundNum, compBluff);
 		return computerDecision;
 	} else if(*userDecision == 2){ //user chooses to bet
 		printf("\nUser chose to bet");
@@ -106,7 +106,7 @@ int userDecision_2(int* userDecision, struct player* userPlayer, struct player* 
 		printf("\nUser bet %d", *userDecision);
 		userPlayer->chips -= *userDecision;
 		*potTotal += *userDecision;
-		return compDecision_1_1(userDecision, userPlayer, compPlayer, maxBet, potTotal);
+		return compDecision_1_1(userDecision, userPlayer, compPlayer, maxBet, potTotal, roundNum, compBluff);
 	} else if(*userDecision == 3){ //user chooses to fold (announce winner of hand and move on to next round)
 		printf("\nUser chose to fold"); //will use the continue keyword after displaying winner of round
 		printf("\n\nComputer wins the pot");
@@ -118,13 +118,13 @@ int userDecision_2(int* userDecision, struct player* userPlayer, struct player* 
 		return 2;
 	} else { //user chose invalid input 
 		printf("\nUser chose to check");
-		computerDecision = compDecision_2(userDecision, userPlayer, compPlayer, maxBet, potTotal);
+		computerDecision = compDecision_2(userDecision, userPlayer, compPlayer, maxBet, potTotal, roundNum, compBluff);
 	        return computerDecision;
 	}
 	
 }
 
-int userDecision_1_1(int* userDecision, struct player* userPlayer, struct player* compPlayer, int* potTotal, int* compDecision, int maxBet){ //if computer chooses to raise
+int userDecision_1_1(int* userDecision, struct player* userPlayer, struct player* compPlayer, int* potTotal, int* compDecision, int maxBet, int roundNum, int compBluff){ //if computer chooses to raise
 	printf("\n");
 	printOptions_1();
 	fflush(stdout);
@@ -143,7 +143,7 @@ int userDecision_1_1(int* userDecision, struct player* userPlayer, struct player
 		printf("\nUser bet %d", *userDecision);
 		userPlayer->chips -= *userDecision;
 		*potTotal += *userDecision;
-		return compDecision_1_1(userDecision, userPlayer, compPlayer, maxBet, potTotal);
+		return compDecision_1_1(userDecision, userPlayer, compPlayer, maxBet, potTotal, roundNum, compBluff);
 	} else if(*userDecision == 3){
 		printf("\nUser chose to fold");
 		printf("\n\nComputer wins the pot");
@@ -500,6 +500,329 @@ int determinePoints(struct player* player_1){ //Determines which hand a player h
 
 
 }
+
+//beginning of computer choice making for better informed ai FIXME
+
+//determines if cards are a flush or not (five cards have same suit)
+//if a flush returns one if not a flush returns zero
+int determineFlushCompChoice(struct player* player_1, int numCheck){
+	int diamondsTotal = 0;
+	int spadesTotal = 0;
+	int clubsTotal = 0;
+	int heartsTotal = 0;
+
+	//using strcmp() to determine if strings are equal (same suit), will return zero if equal
+	for(int i = 0; i < numCheck; i++){
+		if(strcmp(player_1->playerDeck[i].suit, "diamonds") == 0){
+			diamondsTotal++;
+		} else if (strcmp(player_1->playerDeck[i].suit, "spades") == 0){
+			spadesTotal++;
+		} else if (strcmp(player_1->playerDeck[i].suit, "clubs") == 0){
+			clubsTotal++;
+		} else if (strcmp(player_1->playerDeck[i].suit, "hearts") == 0){
+			heartsTotal++;
+		} else {
+			printf("Something is not working with the determineFlush function");
+		}
+	}
+
+	//checking if any are above suit totals are above five
+	if(diamondsTotal >= 5){
+		return 1;
+	} else if(spadesTotal >= 5){
+		return 1;
+	} else if(clubsTotal >= 5){
+		return 1;
+	} else if(heartsTotal >= 5){
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+//determine if cards are a straight or not, will return a one if a straight and will return zero if not
+int determineStraightCompChoice(struct player* player_1, int numCheck){
+	int cardPoints = 0;
+	int thisCardValue = 0;
+	int nextCardValue = 0;
+	
+	for(int i = 0; i < (numCheck - 1); i++){
+		//To check if straight has been achieved
+		if(cardPoints >= 4){
+			return 1;
+			break;
+		}
+		thisCardValue = player_1->playerDeck[i].value;
+		nextCardValue = player_1->playerDeck[i+1].value;
+		if(thisCardValue == nextCardValue - 1){
+			cardPoints++;
+		} else if(thisCardValue == nextCardValue){
+			continue;
+		} else {
+			cardPoints = 0;
+		}
+	}
+
+	if(cardPoints >= 4){
+		return 1;
+	} else {
+		return 0;
+	}
+
+}
+
+//return one if royal flush and zero if not
+int determineRoyalFlushCompChoice(struct player* player_1, int numCheck){
+	int tenOfSameSuit = 0;
+	int jokerOfSameSuit = 0;
+	int queenOfSameSuit = 0;
+	int kingOfSameSuit = 0;
+	int aceOfSameSuit = 0;
+	char sameSuit[9];
+
+	for(int i = (numCheck - 1); i >= 0; i--){
+		strcpy(sameSuit, player_1->playerDeck[i].suit);
+		tenOfSameSuit = 0;
+		jokerOfSameSuit = 0;
+		queenOfSameSuit = 0;
+		kingOfSameSuit = 0;
+		for(int j = 0; j < numCheck; j++){
+			if(player_1->playerDeck[j].value == 10){ //checking for ten of same suit
+				if(strcmp(player_1->playerDeck[j].suit, sameSuit) == 0){
+					tenOfSameSuit = 1;
+				}
+			}
+			if(player_1->playerDeck[j].value == 11){ //checking for joker of the same suit
+				if(strcmp(player_1->playerDeck[j].suit, sameSuit) == 0){
+					jokerOfSameSuit = 1;
+				}
+			}
+			if(player_1->playerDeck[j].value == 12){
+				if(strcmp(player_1->playerDeck[j].suit, sameSuit) == 0){
+					queenOfSameSuit = 1;
+				}
+			}
+			if(player_1->playerDeck[j].value == 13){
+				if(strcmp(player_1->playerDeck[j].suit, sameSuit) == 0){
+					kingOfSameSuit = 1;
+				}
+			}
+			if(player_1->playerDeck[j].value == 14){
+				if(strcmp(player_1->playerDeck[j].suit, sameSuit) == 0){
+					aceOfSameSuit = 1;
+				}
+			}
+		}
+
+		if(tenOfSameSuit == 1){
+			if(jokerOfSameSuit == 1){
+				if(queenOfSameSuit == 1){
+					if(kingOfSameSuit == 1){
+						if(aceOfSameSuit == 1){
+							return 1;
+							break;
+						}
+					}
+				}
+			}
+		}
+
+	}
+
+	return 0;
+}
+
+//returns one if straight flush and returns zero if not
+int determineStraightFlushCompChoice(struct player* player_1, int numCheck){
+
+	int cardPoints = 0;
+	int thisCardValue = 0;
+	int nextCardValue = 0;
+	char thisCardSuit[9];
+	char nextCardSuit[9];
+	
+	for(int i = 0; i < (numCheck - 1); i++){
+		//To check if straight has been achieved
+		if(cardPoints >= 4){
+			return 1;
+			break;
+		}
+		thisCardValue = player_1->playerDeck[i].value;
+		nextCardValue = player_1->playerDeck[i+1].value;
+		strcpy(thisCardSuit, player_1->playerDeck[i].suit);
+		strcpy(nextCardSuit, player_1->playerDeck[i+1].suit);
+		if(thisCardValue == nextCardValue - 1){
+			if(strcmp(thisCardSuit, nextCardSuit) == 0){
+				cardPoints++;
+			}
+		} else if(thisCardValue == nextCardValue){
+			continue;
+		} else {
+			cardPoints = 0;
+		}
+	}
+
+	if(cardPoints >= 4){
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+//returns one if four of a kind and a zero if not
+int determineFourOfAKindCompChoice(struct player* player_1, int numCheck){
+	int samesies;
+	int thisCardValue;
+	for(int i = 0; i < numCheck; i++){
+		thisCardValue = player_1->playerDeck[i].value;
+		samesies = 0;
+		for(int j = 0; j < numCheck; j++){
+			if(thisCardValue == player_1->playerDeck[j].value){
+				samesies++;
+			}
+		}
+		if(samesies >= 4){
+			return 1;
+			break;
+		}
+	}
+	return 0;
+
+}
+
+//return one if a fullhouse and zero if not
+int determineFullHouseCompChoice(struct player* player_1, int numCheck){
+	int threePete = 0; //will equal one if we have three matching cards
+	int twoPete = 0; //will equal one if we have two matching cards
+	int numOfMatches;
+	int valueToMatch;
+	for(int i = 0; i < numCheck; i++){
+		numOfMatches = 0;
+		valueToMatch = player_1->playerDeck[i].value;
+		for(int j = 0; j < numCheck; j++){
+			if(valueToMatch == player_1->playerDeck[j].value){
+				numOfMatches++;
+			}
+		}
+		if(numOfMatches == 2){
+			twoPete = 1;
+		}
+		if(numOfMatches == 3){
+			threePete = 1;
+		}
+	}
+	if(threePete == 1 && twoPete == 1){
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+//return one if a three of a kind and zero if not
+int determineThreeOfAKindCompChoice(struct player* player_1, int numCheck){
+	int numOfMatches;
+	int valueToMatch;
+	for(int i = 0; i < numCheck; i++){
+		numOfMatches = 0;
+		valueToMatch = player_1->playerDeck[i].value;
+		for(int j = 0; j < numCheck; j++){
+			if(valueToMatch == player_1->playerDeck[j].value){
+				numOfMatches++;
+			}
+		}
+		if(numOfMatches == 3){
+			return 1;
+			break;
+		}
+	}
+	return 0;
+}
+
+//return one if a two pair and a zero if not
+int determineTwoPairCompChoice(struct player* player_1, int numCheck){
+	int numOfMatches = 0;
+	for(int i = 0; i < (numCheck - 1); i++){
+		if(player_1->playerDeck[i].value == player_1->playerDeck[i+1].value){
+			numOfMatches++;
+		}
+		if(numOfMatches == 2){
+			return 1;
+			break;
+		}
+	}
+	return 0;
+}
+
+//return one if a pair and a zero if not
+int determinePairCompChoice(struct player* player_1, int numCheck){
+	for(int i = 0; i < (numCheck - 1); i++){
+		if(player_1->playerDeck[i].value == player_1->playerDeck[i+1].value){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int determinePointsCompChoice(struct player* player_1, int roundNum){ //Determines which hand a player has and returns the score of his hand
+
+	//if statement to determine which hand player has, will then return score based on hand
+	//going to have to have to create a function for each of the ten hands
+	//a royal flush returns ten and a single highcard returns a one
+	
+	//Sorting
+	int size;
+	if(roundNum == 1){
+		size = 2;
+	}else{
+		size = (roundNum + 3);
+	}
+	bubbleSort(player_1, size);
+
+	//for debugging purposes
+	printf("\nSorted deck: ");
+	for(int i = 0; i < size; i++){
+		printf("%d ", player_1->playerDeck[i].value);
+	}
+
+	//going to determine what hand (passing size for how many cards to check for)
+	if(determineRoyalFlushCompChoice(player_1, size) == 1){
+		printf("\nplayer has a royal flush!");
+		return 10;
+	} else if(determineStraightFlushCompChoice(player_1, size) == 1){
+		printf("\nplayer has a straight flush!");
+		return 9;
+	} else if(determineFourOfAKindCompChoice(player_1, size) == 1){
+		printf("\nPlayer has four of a kind!");
+		return 8;
+	} else if(determineFullHouseCompChoice(player_1, size) == 1){
+		printf("\nPlayer has a full house!");
+		return 7;
+	} else if(determineFlushCompChoice(player_1, size) == 1){
+		printf("\nPlayer has flush");
+		return 6;
+	} else if(determineStraightCompChoice(player_1, size) == 1){
+		printf("\nPlayer has a straight");
+		return 5;
+	} else if(determineThreeOfAKindCompChoice(player_1, size) == 1){
+		printf("\nPlayer has a three of a kind");
+		return 4;
+	} else if(determineTwoPairCompChoice(player_1, size) == 1){
+		printf("\nPlayer has a two pair");
+		return 3;
+	} else if(determinePairCompChoice(player_1, size) == 1){
+		printf("\nPlayer has a pair");
+		return 2;
+	} else {
+		printf("\nPlayer only has a high card");
+		return 1;
+	}
+	
+
+
+}
+
+//end of informed ai section
+
 
 void determineWinner(int playerOne, int playerTwo, int* potTotal, struct player* player_1, struct player* player_2, struct card userDeck[], struct card compDeck[]){
 	if(playerOne > playerTwo){
@@ -1124,12 +1447,71 @@ void determineWinner(int playerOne, int playerTwo, int* potTotal, struct player*
 
 //Comp player functions
 
-int compDecision_1(int* userDecision, struct player* userPlayer, struct player* compPlayer, int maxBet, int* smallBlind, int* bigBlind, int* potTotal){ //if player calls first
-	srand(time(NULL)); //if when function gets called throughs an error might be because we seeded before
+int compDecision_1(int* userDecision, struct player* userPlayer, struct player* compPlayer, int maxBet, int* smallBlind, int* bigBlind, int* potTotal, int roundNum, int compBluff){ //if player calls first
+	srand(time(NULL)); //if when function gets called throws an error might be because we seeded before
 	int compDecision = rand() % 100 + 1; //generates a random number between one and one hundred
+	//int compBluff = rand() % 2;
 	
 	//will now initiate comp decision
-	if(compDecision <= 75){ //comp chose to call
+	int score = determinePointsCompChoice(compPlayer, roundNum);
+	printf("\nscore is %d", score);
+
+	//round 1 options for comp choice
+	if(compBluff == 0){ //comp is not bluffing
+		if(score == 1){ //comp has a high card
+			if(compDecision <= 97){ //comp chose to call
+				printf("\nComputer chose to call");
+				return 0;
+			}else{ //comp chose to fold
+				printf("\nComputer chose to fold");
+				printf("\nPot goes to user");
+				userPlayer->chips += *potTotal;
+				*potTotal = 0;
+				return 1;
+			}
+		}else{ //comp has a pair 
+		       if(compDecision <= 30){ //comp chose to call
+				printf("\nComputer chose to call");
+				return 0;
+		       }else{
+			       printf("\nComputer chose to raise"); //comp chose to raise
+			       compDecision = rand() % maxBet + 1;
+			       compPlayer->chips -= compDecision;
+			       printf("\n\nComputer chose to raise %d", compDecision);
+			       *potTotal += compDecision;
+			       return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+		      }
+		}
+	}else{
+		if(score == 1){ //comp has a high card
+			if(compDecision <= 35){ //comp chose to call
+				printf("\nComputer chose to call");
+				return 0;
+			}else{ //comp chose to raise
+				printf("\nComputer chose to raise");
+				compDecision = rand() % maxBet + 1;
+				compPlayer->chips -= compDecision;
+				printf("\n\nComputer chose to raise %d", compDecision);
+				*potTotal += compDecision;
+				return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+			}
+		}else{ //comp has a pair 
+		       if(compDecision <= 70){ //comp chose to call
+				printf("\nComputer chose to call");
+				return 0;
+		       }else{
+			       printf("\nComputer chose to raise"); //comp chose to raise
+			       compDecision = rand() % maxBet + 1;
+			       compPlayer->chips -= compDecision;
+			       printf("\n\nComputer chose to raise %d", compDecision);
+			       *potTotal += compDecision;
+			       return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+		      }
+		}
+
+	}
+
+	/*if(compDecision <= 75){ //comp chose to call
 		printf("\nComputer chose to call");
 		return 0;
 	} else if(compDecision < 95){ //comp chose to raise
@@ -1138,22 +1520,264 @@ int compDecision_1(int* userDecision, struct player* userPlayer, struct player* 
 		compPlayer->chips -= compDecision;
 		printf("\n\nComputer chose to raise %d", compDecision);
 		*potTotal += compDecision;
-		return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet);
+		return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum);
 	} else {
 		printf("\nComputer chose to fold"); //Computer chooses to fold (will use continue keyword after displaying winner of the round)
 		printf("\nPot goes to user");
 		userPlayer->chips += *potTotal;
 		*potTotal = 0;
 		return 1;
-	}
+	}*/
+
 	
 }
 
-int compDecision_2(int* userDecision, struct player* userPlayer, struct player* compPlayer, int maxBet, int* potTotal){ //if player checks first
+int compDecision_2(int* userDecision, struct player* userPlayer, struct player* compPlayer, int maxBet, int* potTotal, int roundNum, int compBluff){ //if player checks first
 
 	int compDecision = rand() % 100 + 1;
 
-	if(compDecision <= 66){ //computer chooses to check 
+	//will now initiate comp decision
+	int score = determinePointsCompChoice(compPlayer, roundNum);
+	printf("\nscore is %d", score);
+
+	if(compBluff == 0){ //no bluff
+		if(roundNum == 2){
+			if(score == 1){ //no bluff, round 2, and a highcard
+				if(compDecision <= 80){ 
+					printf("\nComputer chose to check");
+					return 0;
+				}else{
+					printf("\nComputer chose to fold");
+					printf("\nPot goes to user");
+					userPlayer->chips += *potTotal;
+					*potTotal = 0;
+					return 1;
+				}
+			}else if(score == 2){ //no bluff, round 2, and a pair
+				if(compDecision <= 70){
+					printf("\nComputer chose to bet");
+					compDecision = rand() % maxBet + 1;
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}else{
+					printf("\nComputer chose to check");
+					return 0;
+				}
+			}else{
+				if(compDecision <= 95){ //no bluff, round 2, and something better than a pair
+					printf("\nComputer chose to bet");
+					compDecision = (rand() % (maxBet / 2)) + ((maxBet / 2) + 1);
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}else{
+					printf("\nComputer chose to check");
+					return 0;
+				}
+			}
+		}else if(roundNum == 3){
+			if(score == 1){ //no bluff, round 3, and a highcard
+				if(compDecision <= 70){ 
+					printf("\nComputer chose to check");
+					return 0;
+				}else{
+					printf("\nComputer chose to fold");
+					printf("\nPot goes to user");
+					userPlayer->chips += *potTotal;
+					*potTotal = 0;
+					return 1;
+				}
+			}else if(score == 2){ //no bluff, round 3, and a pair
+				if(compDecision <= 60){
+					printf("\nComputer chose to bet");
+					compDecision = rand() % maxBet + 1;
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}else{
+					printf("\nComputer chose to check");
+					return 0;
+				}
+			}else{
+				if(compDecision <= 95){ //no bluff, round 3, better than a pair
+					printf("\nComputer chose to bet");
+					compDecision = (rand() % (maxBet / 2)) + ((maxBet / 2) + 1);
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}else{
+					printf("\nComputer chose to check");
+					return 0;
+				}
+			}
+			
+		}else{ //round 4
+			if(score == 1){ //no bluff, round 4, and a highcard
+				if(compDecision <= 45){ 
+					printf("\nComputer chose to check");
+					return 0;
+				}else{
+					printf("\nComputer chose to fold");
+					printf("\nPot goes to user");
+					userPlayer->chips += *potTotal;
+					*potTotal = 0;
+					return 1;
+				}
+			}else if(score == 2){ //no bluff, round 4, and a pair
+				if(compDecision <= 50){
+					printf("\nComputer chose to bet");
+					compDecision = rand() % maxBet + 1;
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}else{
+					printf("\nComputer chose to check");
+					return 0;
+				}
+			}else{
+				if(compDecision <= 95){ //no bluff, round 3, better than a pair
+					printf("\nComputer chose to bet");
+					compDecision = (rand() % (maxBet / 2)) + ((maxBet / 2) + 1);
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}else{
+					printf("\nComputer chose to check");
+					return 0;
+				}
+			}
+
+		}
+	}else{ //we bluffing with this one
+		if(roundNum == 2){
+			if(score == 1){ //bluff, round 2, and a highcard
+				if(compDecision <= 50){ 
+					printf("\nComputer chose to check");
+					return 0;
+				}else{
+					printf("\nComputer chose to bet");
+					compDecision = rand() % maxBet + 1;
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}
+			}else if(score == 2){ //bluff, round 2, and a pair
+				if(compDecision <= 30){
+					printf("\nComputer chose to bet");
+					compDecision = rand() % maxBet + 1;
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}else{
+					printf("\nComputer chose to check");
+					return 0;
+				}
+			}else{
+				if(compDecision <= 5){ //bluff, round 2, and something better than a pair
+					printf("\nComputer chose to bet");
+					compDecision = (rand() % (maxBet / 2)) + ((maxBet / 2) + 1);
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}else{
+					printf("\nComputer chose to check");
+					return 0;
+				}
+			}
+		}else if(roundNum == 3){
+			if(score == 1){ //bluff, round 3, and a highcard
+				if(compDecision <= 40){ 
+					printf("\nComputer chose to check");
+					return 0;
+				}else{
+					printf("\nComputer chose to bet");
+					compDecision = rand() % maxBet + 1;
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}
+			}else if(score == 2){ //bluff, round 3, and a pair
+				if(compDecision <= 20){
+					printf("\nComputer chose to bet");
+					compDecision = rand() % maxBet + 1;
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}else{
+					printf("\nComputer chose to check");
+					return 0;
+				}
+			}else{
+				if(compDecision <= 5){ //bluff, round 3, better than a pair
+					printf("\nComputer chose to bet");
+					compDecision = (rand() % (maxBet / 2)) + ((maxBet / 2) + 1);
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}else{
+					printf("\nComputer chose to check");
+					return 0;
+				}
+			}
+			
+		}else{ //round 4
+			if(score == 1){ //bluff, round 4, and a highcard
+				if(compDecision <= 30){ 
+					printf("\nComputer chose to check");
+					return 0;
+				}else{
+					printf("\nComputer chose to bet");
+					compDecision = (rand() % maxBet) + 1;
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision; 
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}
+			}else if(score == 2){ //bluff, round 4, and a pair
+				if(compDecision <= 30){
+					printf("\nComputer chose to bet");
+					compDecision = rand() % maxBet + 1;
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}else{
+					printf("\nComputer chose to check");
+					return 0;
+				}
+			}else{
+				if(compDecision <= 5){ //bluff, round 3, better than a pair
+					printf("\nComputer chose to bet");
+					compDecision = (rand() % (maxBet / 2)) + ((maxBet / 2) + 1);
+					printf("\nComputer bet %d", compDecision);
+					compPlayer->chips -= compDecision;
+					*potTotal += compDecision;
+					return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+				}else{
+					printf("\nComputer chose to check");
+					return 0;
+				}
+			}
+
+		}
+
+	}
+	
+
+	/*if(compDecision <= 66){ //computer chooses to check 
 		printf("\nComputer chose to check");
 		return 0;
 	} else if(compDecision <= 90){ //computer chooses to bet
@@ -1162,19 +1786,862 @@ int compDecision_2(int* userDecision, struct player* userPlayer, struct player* 
 		printf("\nComputer bet %d", compDecision);
 		compPlayer->chips -= compDecision;
 		*potTotal += compDecision;
-		return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet);
+		return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum);
 	} else { //computer chooses to fold (announce winner of hand and move on to next round)
 		printf("\nComputer chose to fold"); //will use the continue keyword after displaying winner of round
 	        printf("\nPot goes to user");
 		userPlayer->chips += *potTotal;
 		*potTotal = 0;
 		return 1;
-	}
+	}*/
 
 }
 
-int compDecision_1_1(int* userDecision, struct player* userPlayer, struct player* compPlayer, int maxBet, int* potTotal){ //if player going first and decides to bet
+int compDecision_1_1(int* userDecision, struct player* userPlayer, struct player* compPlayer, int maxBet, int* potTotal, int roundNum, int compBluff){ //if player going first and decides to bet
 	int compDecision = rand() % 100 + 1;
+	int score = determinePointsCompChoice(compPlayer, roundNum);
+	printf("\nscore is %d", score);
+
+	if(compBluff == 0){
+		if(roundNum == 1){
+			if(score == 1){
+				if(*userDecision <= 100){ //no bluff, round 1, highcard, bet under 101
+					if(compDecision <= 85){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+				}else if(*userDecision <= 250){ //no bluff, round 1, highcard, bet under 251
+					if(compDecision <= 75){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+				}else{ //no bluff, round 1, highcard, bet over 250
+					if(compDecision <= 50){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 1;
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+				}
+			}else if(score ==2){
+				if(*userDecision <= 100){
+					if(compDecision <= 60){ //no bluff, round 1, pair, bet under 101
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+
+					}
+				}else if(*userDecision <= 250){ //no bluff, round 1, pair, bet under 251
+					if(compDecision <= 70){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+				}else{ //no bluff, round 1, pair, bet over 250
+					if(compDecision <= 80){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+
+				}
+			} //end of score 2
+		}else if(roundNum == 2){
+			if(score == 1){
+				if(*userDecision <= 100){ //no bluff, round 2, highcard, bet under 101
+					if(compDecision <= 60){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+
+				}else if(*userDecision <= 250){ //no bluff, round 2, highcard, bet under 251
+					if(compDecision <= 35){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+
+				}else{ //no bluff, round 2, highcard, bet over 250
+					if(compDecision <= 20){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+
+				}
+			}else if(score == 2){ //no bluff, round 2, pair, bet under 101
+				if(*userDecision <= 100){
+					if(compDecision <= 70){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+					
+				}else if(*userDecision <= 250){ //no bluff, round 2, pair, bet under 251
+					if(compDecision <= 80){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+
+				}else{ //no bluff, round 2, pair, bet over 250
+					if(compDecision <= 80){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else if(compDecision < 90){
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+
+				}
+			}else{ //no bluff, round 2, anything better than a pair, bet of any kind
+					if(compDecision <= 50){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+
+			}
+		}else if(roundNum == 3){
+			if(score == 1){
+				if(*userDecision <= 100){ //no bluff, round 3, highcard, bet under 101
+					if(compDecision <= 50){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+
+				}else if(*userDecision <= 250){ //no bluff, round 3, highcard, bet under 251
+					if(compDecision <= 25){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+
+
+				}else{ //no bluff, round 3, highcard, bet over 250
+					if(compDecision <= 15){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+
+				}
+			}else if(score == 2){
+				if(*userDecision <= 100){ //no bluff, round 3, pair, bet under 101
+					if(compDecision <= 80){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+				}else if(*userDecision <= 250){ //no bluff, round 3, pair, bet under 251
+					if(compDecision <= 90){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}	
+				}else{ //no bluff, round 3, pair, bet over 250
+					if(compDecision <= 75){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else if(compDecision < 90){
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+				}
+			}else{ //no bluff, round 3, anything better than a pair, any bet
+					if(compDecision <= 50){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+			}
+		}else{ //round 4
+			if(score == 1){
+				if(*userDecision <= 100){ //no bluff, round 4, highcard, bet under 101
+					if(compDecision <= 20){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+				}else if(*userDecision <= 250){ //no bluff, round 4, highcard, bet under 251
+					if(compDecision <= 10){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+				}else{ //no bluff, round 4, highcard, bet over 250 
+					if(compDecision <= 5){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+				}
+			}else if(score == 2){
+				if(*userDecision <= 100){ //no bluff, round 4, pair, bet under 101
+					if(compDecision <= 85){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+
+				}else if(*userDecision <= 250){ //no bluff, round 4, pair, bet under 251
+					if(compDecision <= 95){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}	
+				}else{ //no bluff, round 4, pair, bet over 250
+					if(compDecision <= 80){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else if(compDecision < 90){
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}else{
+						printf("\nComputer chose to fold");
+						printf("\nPot goes to user");
+						userPlayer->chips += *potTotal;
+						return 1;
+					}
+				}
+			}else{ //no bluff, round 4, anything better than a pair, any bet
+					if(compDecision <= 50){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+
+			}
+		} //end of round 4
+	}else if(compBluff == 1){
+		if(roundNum == 1){
+			if(score == 1){
+				if(*userDecision <= 100){ //bluff, round 1, highcard, bet under 101
+					if(compDecision <= 70){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+				}else if(*userDecision <= 250){ //bluff, round 1, highcard, bet under 251
+					if(compDecision <= 60){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+				}else{ //bluff, round 1, highcard, bet over 250
+					if(compDecision <= 50){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 1;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);	
+					}
+				}
+			}else if(score == 2){
+				if(*userDecision <= 100){
+					if(compDecision <= 50){ //bluff, round 1, pair, bet under 101
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+				}else if(*userDecision <= 250){ //bluff, round 1, pair, bet under 251
+					if(compDecision <= 60){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+				}else{ //bluff, round 1, pair, bet over 250
+					if(compDecision <= 70){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+
+				}
+			}else{
+				printf("something wrong with scoring for comp check compDecision_1_1");
+			}
+		}else if(roundNum == 2){
+			if(score == 1){
+				if(*userDecision <= 100){ //bluff, round 2, highcard, bet under 101
+					if(compDecision <= 70){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);	
+					}
+
+				}else if(*userDecision <= 250){ //bluff, round 2, highcard, bet under 251
+					if(compDecision <= 75){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);	
+					}
+
+				}else{ //bluff, round 2, highcard, bet over 250
+					if(compDecision <= 80){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);	
+					}
+
+				}
+			}else if(score == 2){ //bluff, round 2, pair, bet under 101
+				if(*userDecision <= 100){
+					if(compDecision <= 80){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+					
+				}else if(*userDecision <= 250){ //bluff, round 2, pair, bet under 251
+					if(compDecision <= 85){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+
+				}else{ //bluff, round 2, pair, bet over 250
+					if(compDecision <= 90){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+
+				}
+			}else{ //bluff, round 2, anything better than a pair, bet of any kind
+					if(compDecision <= 90){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+
+			}
+
+		}else if(roundNum == 3){
+			if(score == 1){
+				if(*userDecision <= 100){ //bluff, round 3, highcard, bet under 101
+					if(compDecision <= 50){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);	
+					}
+
+				}else if(*userDecision <= 250){ //bluff, round 3, highcard, bet under 251
+					if(compDecision <= 75){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);	
+					}
+
+
+				}else{ //bluff, round 3, highcard, bet over 250
+					if(compDecision <= 85){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);	
+					}
+
+				}
+			}else if(score == 2){
+				if(*userDecision <= 100){ //bluff, round 3, pair, bet under 101
+					if(compDecision <= 80){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+				}else if(*userDecision <= 250){ //bluff, round 3, pair, bet under 251
+					if(compDecision <= 90){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}	
+				}else{ //bluff, round 3, pair, bet over 250
+					if(compDecision <= 95){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+				}
+			}else{ //bluff, round 3, anything better than a pair, any bet
+					if(compDecision <= 90){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+			}
+			
+		}else if(roundNum == 4){
+			if(score == 1){
+				if(*userDecision <= 100){ //bluff, round 4, highcard, bet under 101
+					if(compDecision <= 50){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);	
+					}
+
+				}else if(*userDecision <= 250){ //bluff, round 4, highcard, bet under 251
+					if(compDecision <= 75){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);	
+					}
+
+
+				}else{ //bluff, round 4, highcard, bet over 250
+					if(compDecision <= 85){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);	
+					}
+
+				}
+			}else if(score == 2){
+				if(*userDecision <= 100){ //bluff, round 4, pair, bet under 101
+					if(compDecision <= 80){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+				}else if(*userDecision <= 250){ //bluff, round 3, pair, bet under 251
+					if(compDecision <= 90){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}	
+				}else{ //bluff, round 4, pair, bet over 250
+					if(compDecision <= 95){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+				}
+			}else{ //bluff, round 4, anything better than a pair, any bet
+					if(compDecision <= 90){
+						printf("\nComputer chose to call players bet");
+						*potTotal += *userDecision;
+						compPlayer->chips -= *userDecision;
+						return 0;
+					}else{
+						printf("\nMax bet: %d", maxBet);
+						compDecision = rand() % maxBet + *userDecision;
+						printf("\nComputer chose to raise %d chips", compDecision);
+						compPlayer->chips -= compDecision;
+						*potTotal += compDecision;
+						return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
+					}
+			}
+
+		}
+
+	}
+
+
+	/*
 	if(compDecision < 70){ //computers calls players raise
 		printf("\nComputer chose to call players bet");
 		*potTotal += *userDecision;
@@ -1186,14 +2653,14 @@ int compDecision_1_1(int* userDecision, struct player* userPlayer, struct player
 		printf("\nComputer chose to raise %d chips", compDecision);
 		compPlayer->chips -= compDecision;
 		*potTotal += compDecision;
-		return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet);
+		return userDecision_1_1(userDecision, userPlayer, compPlayer, potTotal, &compDecision, maxBet, roundNum, compBluff);
 	} else {
 		printf("\nComputer chose to fold");
 		printf("\nUser wins pot");
 		userPlayer->chips += *potTotal;
 		*potTotal = 0;
 		return 1;
-	}
+	}*/
 }
 
 
@@ -1212,7 +2679,6 @@ void printTableDeck(struct tableDeck* deck){
 void printPlayerUI_1(struct player* userPlayer, int* totalPot){
 	printf("\nPot: %d\n", *totalPot);
 	printf("\nPlayer Chips: %d\n", userPlayer->chips);
-	
 	//printing player's cards 
 	
 	printf("\nYour deck: ");
@@ -1366,6 +2832,7 @@ int main() {
 	int userDecision;
 	int computerDecision;
 	int determineNextMove; //if equal to zero nothing happens, if equal to one we continue and go to next hand, and if two we break out of loop
+        int roundNum;
 
 
 	userPlayer.chips = chipCount;
@@ -1407,6 +2874,15 @@ int main() {
 	        userPlayer.chips -= smallBlind;
 	        computerPlayer.chips -= bigBlind;
 
+		//determines whether computer is going to bluff or not this hand
+		int compBluff = (rand() % 100) + 1;
+		printf("compBluff: %d", compBluff);
+		if(compBluff <= 80){ //comp will not bluff
+			compBluff = 0;
+		}else{ //comp will bluff
+			compBluff = 1;
+		}
+
 	        //initial bets have been placed into the pot, for the first round of poker the users can either choose to: (one) call the big blind,
 	        //(two) fold and end the round, (three) raise and give a number for how much you would like to
 	
@@ -1414,7 +2890,8 @@ int main() {
 	
           	printPlayerUI_1(&userPlayer, &potTotal);
         	printOptions_1();
-         	determineNextMove = userDecision_1(&userDecision, &userPlayer, &computerPlayer, maxBet, &smallBlind, &bigBlind, &potTotal);
+		roundNum = 1;
+         	determineNextMove = userDecision_1(&userDecision, &userPlayer, &computerPlayer, maxBet, &smallBlind, &bigBlind, &potTotal, roundNum, compBluff);
 		if(determineNextMove == 1){
 			printf("\n\nMoving on to next hand");
 			printToNextHand();
@@ -1431,7 +2908,8 @@ int main() {
 		printToNextRound();
         	printPlayerUI_2(&userPlayer, &potTotal);
         	printOptions_2();
-         	determineNextMove = userDecision_2(&userDecision, &userPlayer, &computerPlayer, &potTotal, maxBet);
+		roundNum = 2;
+         	determineNextMove = userDecision_2(&userDecision, &userPlayer, &computerPlayer, &potTotal, maxBet, roundNum, compBluff);
 		if(determineNextMove == 1){
 			printf("\n\nMove on to the next hand");
 			printToNextHand();
@@ -1448,7 +2926,8 @@ int main() {
 		printToNextRound();
          	printPlayerUI_3(&userPlayer, &potTotal);
           	printOptions_2();
-         	determineNextMove = userDecision_2(&userDecision, &userPlayer, &computerPlayer, &potTotal, maxBet);
+		roundNum = 3;
+         	determineNextMove = userDecision_2(&userDecision, &userPlayer, &computerPlayer, &potTotal, maxBet, roundNum, compBluff);
 		if(determineNextMove == 1){
 			printf("\n\nMoving on to the next hand");
 			printToNextHand();
@@ -1465,7 +2944,8 @@ int main() {
 		printToNextRound();
          	printPlayerUI_4(&userPlayer, &potTotal);
          	printOptions_2();
-         	determineNextMove = userDecision_2(&userDecision, &userPlayer, &computerPlayer, &potTotal, maxBet);
+		roundNum = 4;
+         	determineNextMove = userDecision_2(&userDecision, &userPlayer, &computerPlayer, &potTotal, maxBet, roundNum, compBluff);
 		if(determineNextMove == 1){
 			printf("\n\nMoving on to the next hand");
 			printToNextHand();
