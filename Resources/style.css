@@ -8,6 +8,10 @@ body {
 }
 
 .download {
+    display: flex;
+    align-items: self-end;
+    justify-content: space-around;
+    flex-basis: 40%;
     padding-top: 2%;
 }
 
