@@ -84,6 +84,12 @@ header nav {
     text-decoration: underline;
 }
 
+.section-3-1 {
+    display: flex;
+    justify-content: space-between;
+    width: 45%;
+}
+
 /*Section-4 Body*/
 
 .section-4 {
@@ -151,7 +157,21 @@ header nav {
         flex: 1 1 auto;
         width: auto;
     }
+
+    .section-3-1 {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+    }
 } 
+
+@media screen and (max-width: 580px) {
+    .section-3-1 {
+        display: flex;
+        justify-content: space-between;
+        width: 90%;
+    }
+}
 
 @media screen and (max-width: 770px) {
 
